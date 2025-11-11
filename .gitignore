@@ -3,14 +3,14 @@ venv/
 __pycache__/
 *.pyc
 
-# Credentials
+# Credentials (CRITICAL - never commit)
 *.json
 .env
 
-# Data files
+# Data files (don't commit large datasets)
 data/raw/*.csv
 
-# dbt
+# dbt (for upcoming checkpoint 3)
 dbt_project/target/
 dbt_project/dbt_packages/
 dbt_project/logs/

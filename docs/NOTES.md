@@ -25,91 +25,326 @@
 
 ---
 
-## What We Built
+## What has been Built
 
-### 1. Enabled APIs
+# GCP Setup Guide - Fraud Detection Platform
 
+# GCP Setup - Fraud Detection Platform
+
+## Command 1: Login to GCP
+
+```powershell
+gcloud auth login
+```
+
+**What it does:** Opens browser for Google account login, saves authentication token to `C:\Users\cyfer\.config\gcloud\`
+
+**Why:** GCP needs to verify WHO is running commands (like showing ID at building entrance)
+
+**Behind the scenes:** Browser → Google login → Token generated → Saved locally → Future commands use token
+
+---
+
+## Command 2: Set Active Project
+
+```powershell
+gcloud config set project total-compiler-477816-r3
+```
+
+**What it does:** Sets default project for all future commands
+
+**Why:** Prevents typing project ID in every command
+
+**Alternative:**
+```powershell
+# Without default: gcloud iam service-accounts list --project=total-compiler-477816-r3
+# With default: gcloud iam service-accounts list
+```
+
+---
+
+## Command 3: Enable BigQuery API
+
+```powershell
 gcloud services enable bigquery.googleapis.com
+```
 
-text
-**Why:** GCP services locked by default to prevent charges
+**What it does:** Activates BigQuery service in your project
 
-### 2. Created 3 Datasets (Singapore)
+**Why disabled by default:** Cost protection, security, explicit opt-in required
 
+**Verify:**
+```powershell
+gcloud services list --enabled --filter="name:bigquery"
+```
+
+---
+
+## Command 4A: Create Raw Dataset
+
+```powershell
+bq mk --location=asia-southeast1 --dataset fraud_detection_raw
+```
+
+**Breaking it down:**
+- `bq` = BigQuery command tool
+- `mk` = "make" (create)
+- `--location=asia-southeast1` = Store in Singapore
+- `--dataset` = Creating dataset (not table)
+- `fraud_detection_raw` = Dataset name
+
+**Structure created:**
+```
+Project: total-compiler-477816-r3
+  └── BigQuery
+      └── fraud_detection_raw (dataset)
+          └── [empty - no tables yet]
+```
+
+**Why this location:** Affects query speed, cost, data residency (can't change later)
+
+---
+
+## Command 4B-C: Create Dev and Prod Datasets
+
+```powershell
+bq mk --location=asia-southeast1 --dataset fraud_detection_dev
+bq mk --location=asia-southeast1 --dataset fraud_detection_prod
+```
+
+**Why separate datasets:**
+
+❌ **Bad (single dataset):**
+```
+fraud_detection
+  ├── raw_transactions
+  ├── test_cyfer_experiment_v3 (mess)
+  ├── final_report (business sees this)
+  └── temp_table_delete_later (oops)
+```
+
+✅ **Good (separate datasets):**
+```
+fraud_detection_raw → Original data (untouched)
+fraud_detection_dev → Your sandbox (break things safely)
+fraud_detection_prod → Production (tested and clean)
+```
+
+---
+
+## Command 5: Verify Datasets
+
+```powershell
+bq ls
+```
+
+**Expected output:**
+```
+  datasetId
+ -----------------------
+  fraud_detection_raw
+  fraud_detection_dev
+  fraud_detection_prod
+```
+
+---
+
+## Command 6: Create Service Account
+
+```powershell
+gcloud iam service-accounts create dbt-fraud-detection --display-name="dbt Fraud Detection"
+```
+
+**What gets created:**
+- Email: `dbt-fraud-detection@total-compiler-477816-r3.iam.gserviceaccount.com`
+- Type: Service account (robot user)
+- Permissions: NONE yet (blank slate)
+
+**Why "dbt-fraud-detection":** Describes purpose (dbt tool) + project (fraud detection)
+
+---
+
+## Command 7: Grant BigQuery Data Editor Role
+
+```powershell
+gcloud projects add-iam-policy-binding total-compiler-477816-r3 \
+  --member="serviceAccount:dbt-fraud-detection@total-compiler-477816-r3.iam.gserviceaccount.com" \
+  --role="roles/bigquery.dataEditor"
+```
+
+**What "dataEditor" includes:**
+
+✅ **CAN:**
+- Create tables
+- Insert/update/delete data
+- Read data
+- Delete tables
+- Update schemas
+
+❌ **CANNOT:**
+- Create/delete datasets
+- Manage IAM permissions
+- View billing
+
+---
+
+## Command 8: Grant BigQuery Job User Role
+
+```powershell
+gcloud projects add-iam-policy-binding total-compiler-477816-r3 \
+  --member="serviceAccount:dbt-fraud-detection@total-compiler-477816-r3.iam.gserviceaccount.com" \
+  --role="roles/bigquery.jobUser"
+```
+
+**What "jobUser" includes:**
+- Submit query jobs (run SELECT)
+- Get job status
+- Cancel own jobs
+
+**Why TWO roles needed:**
+
+Think of warehouse access:
+- `dataEditor` = Key to warehouse (can enter, move boxes)
+- `jobUser` = Permission to use forklift (can execute work)
+
+Need BOTH:
+- Without `dataEditor`: Can start forklift, but door locked
+- Without `jobUser`: Can open door, but forklift won't start
+
+---
+
+## Command 9: Create .dbt Folder
+
+```powershell
+New-Item -ItemType Directory -Path $HOME\.dbt -Force
+```
+
+**What will go here:**
+```
+C:\Users\cyfer\.dbt\
+  ├── fraud-detection-key.json (service account key)
+  ├── profiles.yml (dbt connection config)
+  └── logs/ (dbt run logs)
+```
+
+**Why outside project folder:** Credentials shouldn't be in Git
+
+---
+
+## Command 10: Download Service Account Key
+
+```powershell
+gcloud iam service-accounts keys create $HOME\.dbt\fraud-detection-key.json \
+  --iam-account=dbt-fraud-detection@total-compiler-477816-r3.iam.gserviceaccount.com
+```
+
+**What happens:**
+1. GCP generates RSA key pair (public + private)
+2. Public key: Stored in GCP (verifies signatures)
+3. Private key: Downloaded to your computer (signs requests)
+
+**JSON file contains:**
+```json
+{
+  "type": "service_account",
+  "project_id": "total-compiler-477816-r3",
+  "private_key": "-----BEGIN PRIVATE KEY-----\n...",
+  "client_email": "dbt-fraud-detection@total-compiler-477816-r3.iam.gserviceaccount.com"
+}
+```
+
+**Security:** This file = password for service account. NEVER commit to Git.
+
+**How dbt uses it:**
+1. dbt reads `private_key` from JSON
+2. dbt signs API request with private key
+3. Sends signed request to BigQuery
+4. BigQuery verifies signature
+5. If valid, grants access
+
+---
+
+## Command 11: Verify Service Account
+
+```powershell
+gcloud iam service-accounts list --filter="email:dbt-fraud-detection*"
+```
+
+**Expected output:**
+```
+DISPLAY NAME         EMAIL                              DISABLED
+dbt Fraud Detection  dbt-fraud-detection@...           False
+```
+
+---
+
+## Command 12: Verify Key File
+
+```powershell
+Test-Path $HOME\.dbt\fraud-detection-key.json
+```
+
+**Should return:** `True`
+
+---
+
+## Key Concepts Summary
+
+### Service Account = Robot Worker
+- Has email address (identity)
+- Has key file (password)
+- Works 24/7, no human login needed
+
+### IAM Roles = Permissions
+- `dataEditor` = Create/modify tables
+- `jobUser` = Run SQL queries
+- Need BOTH for dbt to work
+
+### Datasets = Folders
+- `raw` = Original untouched data
+- `dev` = Your sandbox
+- `prod` = Final clean data
+
+### Region = Physical Location
+- `asia-southeast1` = Singapore
+- Affects speed and cost
+- Can't change after creation
+
+---
+
+## Quick Reference
+
+```powershell
+# Login
+gcloud auth login
+gcloud config set project total-compiler-477816-r3
+
+# Create datasets
 bq mk --location=asia-southeast1 --dataset fraud_detection_raw
 bq mk --location=asia-southeast1 --dataset fraud_detection_dev
 bq mk --location=asia-southeast1 --dataset fraud_detection_prod
 
+# Create service account
+gcloud iam service-accounts create dbt-fraud-detection --display-name="dbt Fraud Detection"
 
-**Why:** Separate raw/dev/prod to prevent accidental data corruption
+# Grant permissions
+gcloud projects add-iam-policy-binding total-compiler-477816-r3 \
+  --member="serviceAccount:dbt-fraud-detection@total-compiler-477816-r3.iam.gserviceaccount.com" \
+  --role="roles/bigquery.dataEditor"
 
-### 3. Created Service Account
+gcloud projects add-iam-policy-binding total-compiler-477816-r3 \
+  --member="serviceAccount:dbt-fraud-detection@total-compiler-477816-r3.iam.gserviceaccount.com" \
+  --role="roles/bigquery.jobUser"
 
-gcloud iam service-accounts create dbt-fraud-detection
+# Download key
+mkdir $HOME\.dbt -Force
+gcloud iam service-accounts keys create $HOME\.dbt\fraud-detection-key.json \
+  --iam-account=dbt-fraud-detection@total-compiler-477816-r3.iam.gserviceaccount.com
 
-
-**Why:** dbt needs its own credentials (not your password)
-
-### 4. Granted Permissions
-
-dataEditor = create/edit tables
-jobUser = run queries
-
-
-**Why:** Least privilege - only what dbt needs
-
-### 5. Downloaded Key File
-
-gcloud iam service-accounts keys create ~/.dbt/fraud-detection-key.json
-
-
-**Why:** dbt's "password" to login to BigQuery
-
----
-
-## Key Concepts
-
-**Dataset vs Table:**
-- Dataset = Folder (schema)
-- Table = File (actual data)
-
-**Why Singapore?**
-- PH → Singapore = 30ms
-- PH → US = 250ms
-- Faster queries, lower cost
-
-**Service Account vs Personal:**
-- Personal = you (human)
-- Service = robot (automation)
-- If key leaks, delete robot (don't change your password)
-
-**Security:**
-- Key file in `~/.dbt/` (not Git)
-- Only dataEditor + jobUser roles (not Owner)
-
----
-
-## Cost Reality
-
-**Your 150MB dataset:**
-- Storage: $0.003/month
-- Queries: Free (under 1TB/month limit)
-- Total project: $1-3 for everything
-
-**Free tier:**
-- $300 credits
-- 10GB storage free/month
-- 1TB queries free/month
-
----
-
-## Status
-
-- [x] GCP project configured
-- [x] 3 BigQuery datasets (Singapore)
-- [x] Service account + key file
-- [ ] dbt setup (next)
-
----
+# Verify
+bq ls
+gcloud iam service-accounts list --filter="email:dbt-fraud-detection*"
+Test-Path $HOME\.dbt\fraud-detection-key.json
+```
 
 *Last updated: Nov 11, 2025*
