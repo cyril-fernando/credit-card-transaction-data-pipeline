@@ -1,0 +1,17 @@
+version: 2
+
+sources:
+  - name: raw
+    description: "Raw fraud detection data from CSV"
+    database: total-compiler-477816-r3
+    schema: fraud_detection_raw
+    tables:
+      - name: transactions
+        description: "Credit card transaction data (284K rows)"
+        columns:
+          - name: Time
+            description: "Seconds elapsed between transactions"
+          - name: Amount
+            description: "Transaction amount"
+          - name: Class
+            description: "Fraud label (1=fraud, 0=legitimate)"

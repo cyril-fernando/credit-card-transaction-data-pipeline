@@ -1,0 +1,21 @@
+version: 2
+
+models:
+  - name: stg_transactions
+    description: "Cleaned and standardized transaction data"
+    columns:
+      - name: transaction_id
+        description: "Unique transaction identifier"
+        data_tests:
+          - unique
+          - not_null
+          
+      - name: amount
+        description: "Transaction amount in dollars"
+        data_tests:
+          - not_null
+          
+      - name: is_fraud
+        description: "Fraud indicator (1=fraud, 0=legitimate)"
+        data_tests:
+          - not_null
