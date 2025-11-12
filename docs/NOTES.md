@@ -349,147 +349,64 @@ Test-Path $HOME\.dbt\fraud-detection-key.json
 
 # dbt Setup Notes
 
-## Overview
+## dbt Core Concepts (Checkpoints 3-7)
 
-dbt transforms raw data into analytics-ready tables using SQL. Write SELECT statements in `.sql` files, dbt handles the CREATE TABLE/VIEW logic.
+### Project Structure
 
----
-
-## Project Structure
-
-```
 dbt_project/
-├── dbt_project.yml          # Project config
-└── models/
-    └── staging/
-        ├── sources.yml      # Raw data sources
-        ├── stg_transactions.sql
-        └── schema.yml       # Data tests
+├── models/
+│ ├── staging/ (stg_) - Clean raw data, no business logic
+│ ├── intermediate/ (int_) - Derived features, no aggregations
+│ └── marts/ (fact_, dim_) - Optimized for business users
+└── tests/ Custom SQL tests for business rules
 
-~/.dbt/profiles.yml          # Connection credentials (not in repo)
-```
+text
 
----
+### Key Learnings
 
-## Configuration Files
+**Materialization Strategy:**
+- Staging/Intermediate: VIEWs (fast rebuilds, always fresh)
+- Marts: TABLEs (fast queries, partitioned/clustered)
 
-### `~/.dbt/profiles.yml`
-Connection settings for BigQuery. Lives in home directory, never committed to Git.
+**Testing Philosophy:**
+- Test data hygiene (unique, not_null on keys)
+- Test business logic (positive amounts, fraud rate sanity checks)
+- Test date ranges (catch calculation errors)
+- Avoid over-testing (slow CI/CD, maintenance burden)
 
-```yaml
-fraud_detection:
-  target: dev
-  outputs:
-    dev:
-      type: bigquery
-      project: total-compiler-477816-r3
-      dataset: fraud_detection_dev
-      keyfile: ~/.dbt/fraud-detection-key.json
-```
+**Feature Engineering:**
+- Z-scores: Detect outliers (amount_z > 3 = suspicious)
+- Log transforms: Compress wide ranges for ML models
+- Time features: hour_of_day, day_of_week for pattern detection
 
-### `dbt_project.yml`
-Project metadata. Profile name must match profiles.yml.
+**BigQuery Optimization:**
+- Partitioning: Vertical slicing by date (scan only needed days)
+- Clustering: Horizontal sorting by common filters (is_fraud, hour_of_day)
+- Cost: ~$0.04/month for 284K rows (negligible for portfolio)
 
-```yaml
-name: fraud_detection
-profile: fraud_detection
-model-paths: ["models"]
-```
+**Environment Management:**
+- profiles.yml controls dev vs prod datasets
+- target: dev (default) → fraud_detection_dev
+- target: prod → fraud_detection_prod
+- Switch at runtime: dbt run --target prod
 
----
+**Documentation:**
+- dbt docs generate → Creates interactive website
+- Shows lineage graph (DAG of models)
+- Column-level descriptions for business users
+- Essential for portfolio (proves communication skills)
 
-## Models
+**Data Quality Discovery:**
+- Found 1,825 zero-dollar transactions (0.64% of dataset)
+- These are valid authorization checks (verify card without charging)
+- Updated test to allow zeros, block only negatives
+- Learning: Real-world credit card data includes $0 auth checks
 
-### `sources.yml`
-Defines source tables from raw data layer.
+**Final State (Checkpoint 7):**
+- 3 models built (staging → intermediate → marts)
+- 20 tests passing (17 schema + 3 custom business logic)
+- Full documentation with descriptions
+- Lineage graph visualized
+- Ready for orchestration (Dagster)
 
-```yaml
-sources:
-  - name: raw
-    schema: fraud_detection_raw
-    tables:
-      - name: transactions
-```
-
-### `stg_transactions.sql`
-First transformation layer. Cleans raw data, adds IDs, renames columns.
-
-```sql
-{{ config(materialized='view') }}
-
-WITH source AS (
-    SELECT * FROM {{ source('raw', 'transactions') }}
-),
-cleaned AS (
-    SELECT
-        ROW_NUMBER() OVER (ORDER BY Time) AS transaction_id,
-        Amount AS amount,
-        Class AS is_fraud
-    FROM source
-)
-SELECT * FROM cleaned
-```
-
-### `schema.yml`
-Data quality tests. Checks for uniqueness, null values.
-
-```yaml
-models:
-  - name: stg_transactions
-    columns:
-      - name: transaction_id
-        tests:
-          - unique
-          - not_null
-```
-
----
-
-## Commands
-
-### `dbt debug`
-Validates connection to BigQuery.
-
-### `dbt run`
-Builds all models. Creates views/tables in target dataset.
-
-```bash
-dbt run --select stg_transactions  # Build single model
-```
-
-### `dbt test`
-Runs data quality tests defined in schema.yml.
-
----
-
-## Execution Flow
-
-**dbt run:**
-1. Reads dbt_project.yml (gets profile name)
-2. Reads profiles.yml (connects to BigQuery)
-3. Compiles .sql files (replaces Jinja macros)
-4. Executes CREATE VIEW/TABLE statements
-
-**dbt test:**
-1. Reads dbt_project.yml
-2. Reads profiles.yml
-3. Parses schema.yml files
-4. Generates and runs test queries
-
----
-
-## Materialization
-
-- **view** (default): No storage, runs on query
-- **table**: Pre-computed, uses storage
-- **incremental**: Only processes new rows
-
----
-
-## Current Setup
-
-- 284K transactions in fraud_detection_raw
-- 1 staging model (stg_transactions) as VIEW
-- 4 passing data tests
-- BigQuery location: asia-southeast1 (Singapore)
 *Last updated: Nov 12, 2025*
