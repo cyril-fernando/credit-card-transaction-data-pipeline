@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: stg_transactions
+  - name: stg_raw_transactions
     description: "Cleaned and standardized transaction data"
     columns:
       - name: transaction_id

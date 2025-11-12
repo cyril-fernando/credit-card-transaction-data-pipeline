@@ -347,4 +347,149 @@ gcloud iam service-accounts list --filter="email:dbt-fraud-detection*"
 Test-Path $HOME\.dbt\fraud-detection-key.json
 ```
 
-*Last updated: Nov 11, 2025*
+# dbt Setup Notes
+
+## Overview
+
+dbt transforms raw data into analytics-ready tables using SQL. Write SELECT statements in `.sql` files, dbt handles the CREATE TABLE/VIEW logic.
+
+---
+
+## Project Structure
+
+```
+dbt_project/
+├── dbt_project.yml          # Project config
+└── models/
+    └── staging/
+        ├── sources.yml      # Raw data sources
+        ├── stg_transactions.sql
+        └── schema.yml       # Data tests
+
+~/.dbt/profiles.yml          # Connection credentials (not in repo)
+```
+
+---
+
+## Configuration Files
+
+### `~/.dbt/profiles.yml`
+Connection settings for BigQuery. Lives in home directory, never committed to Git.
+
+```yaml
+fraud_detection:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      project: total-compiler-477816-r3
+      dataset: fraud_detection_dev
+      keyfile: ~/.dbt/fraud-detection-key.json
+```
+
+### `dbt_project.yml`
+Project metadata. Profile name must match profiles.yml.
+
+```yaml
+name: fraud_detection
+profile: fraud_detection
+model-paths: ["models"]
+```
+
+---
+
+## Models
+
+### `sources.yml`
+Defines source tables from raw data layer.
+
+```yaml
+sources:
+  - name: raw
+    schema: fraud_detection_raw
+    tables:
+      - name: transactions
+```
+
+### `stg_transactions.sql`
+First transformation layer. Cleans raw data, adds IDs, renames columns.
+
+```sql
+{{ config(materialized='view') }}
+
+WITH source AS (
+    SELECT * FROM {{ source('raw', 'transactions') }}
+),
+cleaned AS (
+    SELECT
+        ROW_NUMBER() OVER (ORDER BY Time) AS transaction_id,
+        Amount AS amount,
+        Class AS is_fraud
+    FROM source
+)
+SELECT * FROM cleaned
+```
+
+### `schema.yml`
+Data quality tests. Checks for uniqueness, null values.
+
+```yaml
+models:
+  - name: stg_transactions
+    columns:
+      - name: transaction_id
+        tests:
+          - unique
+          - not_null
+```
+
+---
+
+## Commands
+
+### `dbt debug`
+Validates connection to BigQuery.
+
+### `dbt run`
+Builds all models. Creates views/tables in target dataset.
+
+```bash
+dbt run --select stg_transactions  # Build single model
+```
+
+### `dbt test`
+Runs data quality tests defined in schema.yml.
+
+---
+
+## Execution Flow
+
+**dbt run:**
+1. Reads dbt_project.yml (gets profile name)
+2. Reads profiles.yml (connects to BigQuery)
+3. Compiles .sql files (replaces Jinja macros)
+4. Executes CREATE VIEW/TABLE statements
+
+**dbt test:**
+1. Reads dbt_project.yml
+2. Reads profiles.yml
+3. Parses schema.yml files
+4. Generates and runs test queries
+
+---
+
+## Materialization
+
+- **view** (default): No storage, runs on query
+- **table**: Pre-computed, uses storage
+- **incremental**: Only processes new rows
+
+---
+
+## Current Setup
+
+- 284K transactions in fraud_detection_raw
+- 1 staging model (stg_transactions) as VIEW
+- 4 passing data tests
+- BigQuery location: asia-southeast1 (Singapore)
+*Last updated: Nov 12, 2025*

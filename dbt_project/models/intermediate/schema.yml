@@ -1,0 +1,36 @@
+version: 2
+
+models:
+  - name: int_transaction_features
+    description: "Intermediate features derived from staging transactions for analytics"
+    columns:
+      - name: transaction_id
+        description: "Unique transaction identifier"
+        data_tests:
+          - unique
+          - not_null
+          
+      - name: transaction_timestamp
+        description: "Absolute timestamp"
+        data_tests:
+          - not_null
+          
+      - name: transaction_date
+        description: "Date extracted from timestamp (for daily aggregations)"
+        data_tests:
+          - not_null
+          
+      - name: hour_of_day
+        description: "Hour of day (0-23) for hourly pattern analysis"
+        data_tests:
+          - not_null
+          
+      - name: amount
+        description: "Transaction amount in euros"
+        data_tests:
+          - not_null
+          
+      - name: is_fraud
+        description: "Fraud indicator: 1=fraudulent, 0=legitimate"
+        data_tests:
+          - not_null
