@@ -408,4 +408,69 @@ Test-Path $HOME\.dbt\fraud-detection-key.json
 - Lineage graph visualized
 - Ready for orchestration (Dagster)
 
-*Last updated: Nov 12, 2025*
+Dagster Orchestration Setup
+
+### What We Built
+- Dagster project wrapping dbt models as orchestrated assets
+- Visual asset graph showing data lineage (stg → int → marts)
+- One-click pipeline execution via Dagster UI
+- Integration of dbt tests as Dagster asset checks
+
+### Project Structure
+```
+dagster_project/
+├── fraud_detection_dagster/
+│ ├── assets.py (dbt models → Dagster assets)
+│ ├── definitions.py (configuration)
+│ └── init.py
+├── pyproject.toml (Dagster project config)
+└── setup.py
+```
+
+
+### Key Files Explained
+
+**assets.py:**
+- Uses `@dbt_assets` decorator to wrap dbt models
+- Reads manifest.json for model metadata
+- Executes `dbt build` when assets are materialized
+- Maps dependencies automatically from dbt ref() functions
+
+**definitions.py:**
+- Registers dbt assets with Dagster
+- Configures DbtCliResource with project_dir and profiles_dir
+- Tells Dagster how to execute dbt commands
+
+### First Run Results
+- Execution time: 56 seconds
+- All 3 models built successfully (2 views + 1 table)
+- All 20 tests passed (0 failed rows)
+- BigQuery integration working perfectly
+
+### Why Orchestration Matters
+**Before Dagster:**
+- Manual `dbt run` commands
+- No visibility into run history
+- No scheduling or alerting
+- Isolated from other tools
+
+**With Dagster:**
+- Visual asset graph and lineage
+- One-click pipeline execution
+- Run history and monitoring
+- Ready for scheduling (Checkpoint 9)
+- Can integrate with Python, Airbyte, etc.
+
+### Troubleshooting Notes
+- GraphQL `__typename` UI bug in Dagster 1.9.x (cosmetic, doesn't affect execution)
+- Use Runs page instead of Assets page if UI shows errors
+- Verify success in BigQuery console: fraud_detection_dev dataset
+- Old `stg_transactions` table from Checkpoint 3 can be deleted (unused)
+
+### Portfolio Value
+✅ Demonstrates modern data orchestration (not just SQL)
+✅ Visual asset lineage (screenshot-worthy for resume)
+✅ Cross-tool integration (dbt + Dagster)
+✅ Production-ready architecture (ready for scheduling/alerting)
+
+*Last updated: Nov 13, 2025*
