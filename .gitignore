@@ -3,17 +3,28 @@ venv/
 __pycache__/
 *.pyc
 
+
 # Credentials (CRITICAL - never commit)
 *.json
 .env
 
+
 # Data files (don't commit large datasets)
 data/raw/*.csv
 
-# dbt (for upcoming checkpoint 3)
+
+# dbt
 dbt_project/target/
 dbt_project/dbt_packages/
 dbt_project/logs/
+
+
+# Dagster (for checkpoint 8+)
+dagster_project/dagster_home/
+dagster_project/storage/
+dagster_project/*.egg-info/
+dagster_project/.dagster_home/
+
 
 # IDE
 .vscode/

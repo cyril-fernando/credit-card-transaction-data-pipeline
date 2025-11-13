@@ -349,18 +349,17 @@ Test-Path $HOME\.dbt\fraud-detection-key.json
 
 # dbt Setup Notes
 
-## dbt Core Concepts (Checkpoints 3-7)
 
 ### Project Structure
 
-dbt_project/
+```dbt_project/
 ├── models/
 │ ├── staging/ (stg_) - Clean raw data, no business logic
 │ ├── intermediate/ (int_) - Derived features, no aggregations
 │ └── marts/ (fact_, dim_) - Optimized for business users
 └── tests/ Custom SQL tests for business rules
+```
 
-text
 
 ### Key Learnings
 
