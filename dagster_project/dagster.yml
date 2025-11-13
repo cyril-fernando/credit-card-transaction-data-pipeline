@@ -1,0 +1,15 @@
+# Dagster project configuration file
+run_coordinator:
+  module: dagster.core.run_coordinator
+  class: QueuedRunCoordinator
+  config:
+    max_concurrent_runs: 2  # Limit concurrent runs to avoid BigQuery throttling
+
+# Enable run monitoring to track long-running jobs
+run_monitoring:
+  enabled: true
+  poll_interval_seconds: 30
+
+# Telemetry configuration
+telemetry:
+  enabled: false  # Disable telemetry for privacy
