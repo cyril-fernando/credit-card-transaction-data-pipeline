@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # PostgreSQL for Dagster metadata 
+  postgres:
+    image: postgres:15
+    container_name: fraud_detection_postgres
+    environment:
+      POSTGRES_USER: dagster_user
+      POSTGRES_PASSWORD: dagster_password
+      POSTGRES_DB: dagster_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dagster_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Dagster webserver + daemon
+  dagster:
+    build:
+      context: .
+      dockerfile: dagster_project/Dockerfile
+    container_name: fraud_detection_dagster
+    ports:
+      - "3000:3000"
+    environment:
+      # BigQuery credentials (mounted as volume)
+      GOOGLE_APPLICATION_CREDENTIALS: /opt/dagster/credentials/fraud-detection-key.json
+      # Dagster config
+      DAGSTER_HOME: /opt/dagster/dagster_home
+      # Database connection (if using PostgreSQL)
+      DAGSTER_POSTGRES_HOST: postgres
+      DAGSTER_POSTGRES_USER: dagster_user
+      DAGSTER_POSTGRES_PASSWORD: dagster_password
+      DAGSTER_POSTGRES_DB: dagster_db
+    volumes:
+      # Mount BigQuery credentials
+      - C:\Users\cyfer\.dbt\fraud-detection-key.json:/opt/dagster/credentials/fraud-detection-key.json:ro
+      # Mount dbt profiles 
+      - ./profiles-docker.yml:/opt/dagster/.dbt/profiles.yml:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

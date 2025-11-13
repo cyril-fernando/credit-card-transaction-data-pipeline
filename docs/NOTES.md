@@ -407,70 +407,69 @@ Test-Path $HOME\.dbt\fraud-detection-key.json
 - Full documentation with descriptions
 - Lineage graph visualized
 - Ready for orchestration (Dagster)
+##
 
-Dagster Orchestration Setup
+# Dagster Orchestration Setup
 
-### What We Built
-- Dagster project wrapping dbt models as orchestrated assets
-- Visual asset graph showing data lineage (stg → int → marts)
-- One-click pipeline execution via Dagster UI
-- Integration of dbt tests as Dagster asset checks
+Dagster Orchestration & Automation
 
 ### Project Structure
 ```
 dagster_project/
 ├── fraud_detection_dagster/
-│ ├── assets.py (dbt models → Dagster assets)
-│ ├── definitions.py (configuration)
-│ └── init.py
-├── pyproject.toml (Dagster project config)
-└── setup.py
+│ ├── assets.py # Wraps dbt models as Dagster assets
+│ └── definitions.py # Registers assets, jobs, schedules, sensors
+├── pyproject.toml # Dagster project config
+└── setup.py # Python package setup
 ```
 
+### Key Learnings
 
-### Key Files Explained
+**Asset-Based Orchestration:**
+- dbt models wrapped as Dagster assets (stg → int → marts)
+- Dependencies auto-mapped from dbt ref() functions
+- Visual lineage graph in UI (screenshot-worthy for resume)
 
-**assets.py:**
-- Uses `@dbt_assets` decorator to wrap dbt models
-- Reads manifest.json for model metadata
-- Executes `dbt build` when assets are materialized
-- Maps dependencies automatically from dbt ref() functions
+**Automation Patterns:**
+- **Daily schedule (2am)**: Incremental refresh of fraud scores
+- **Weekly schedule (Sunday 3am)**: Full rebuild for data quality
+- **Sensor (every 5min)**: Event-driven trigger when 6+ hours since last run
+- Cron expressions: `0 2 * * *` = 2am daily, `0 3 * * 0` = 3am Sundays
 
-**definitions.py:**
-- Registers dbt assets with Dagster
-- Configures DbtCliResource with project_dir and profiles_dir
-- Tells Dagster how to execute dbt commands
+**Jobs vs Schedules:**
+- Job = What to run (groups assets into executable unit)
+- Schedule = When to run it (timer/calendar)
+- Sensor = Why to run it (event/condition)
 
-### First Run Results
-- Execution time: 56 seconds
-- All 3 models built successfully (2 views + 1 table)
-- All 20 tests passed (0 failed rows)
-- BigQuery integration working perfectly
+**Run Tracking:**
+- All executions logged with timestamps, duration, status
+- Tags differentiate sources: `dagster/schedule_name`, `source: sensor`
+- Filter runs by job, schedule, or status in UI
 
-### Why Orchestration Matters
-**Before Dagster:**
-- Manual `dbt run` commands
-- No visibility into run history
-- No scheduling or alerting
-- Isolated from other tools
+**Sensor Cursors:**
+- Persistent storage between evaluations (sensors are stateless)
+- Track "last run time" to check freshness thresholds
+- Use `context.cursor` to read, `context.update_cursor()` to write
 
-**With Dagster:**
-- Visual asset graph and lineage
-- One-click pipeline execution
-- Run history and monitoring
-- Ready for scheduling (Checkpoint 9)
-- Can integrate with Python, Airbyte, etc.
+**Cost Management:**
+- Each run costs ~$0.0014 in BigQuery queries
+- Daily automation: ~$0.042/month (30 days × $0.0014)
+- Local Dagster: Free (no cloud hosting costs)
+- Views = $0 storage, only table storage costs
 
-### Troubleshooting Notes
-- GraphQL `__typename` UI bug in Dagster 1.9.x (cosmetic, doesn't affect execution)
-- Use Runs page instead of Assets page if UI shows errors
-- Verify success in BigQuery console: fraud_detection_dev dataset
-- Old `stg_transactions` table from Checkpoint 3 can be deleted (unused)
+**Configuration:**
+- `DBT_PROFILES_DIR`: Points to C:\Users\cyfer\.dbt (credentials)
+- `execution_timezone`: Asia/Singapore (ensures 2am local time)
+- `AssetSelection.all()`: Runs all 3 assets together
 
-### Portfolio Value
-✅ Demonstrates modern data orchestration (not just SQL)
-✅ Visual asset lineage (screenshot-worthy for resume)
-✅ Cross-tool integration (dbt + Dagster)
-✅ Production-ready architecture (ready for scheduling/alerting)
+**Final State (Checkpoint 9):**
+- 3 dbt assets orchestrated through Dagster
+- 1 job definition (fraud_detection_refresh)
+- 2 schedules (daily + weekly) running automatically
+- 1 sensor monitoring data freshness
+- Run history tracked with tags
+- Ready for Docker containerization (Checkpoint 12)
+
+
 
 *Last updated: Nov 13, 2025*

@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+*.egg-info/
+
+# dbt
+dbt_project/target/
+dbt_project/dbt_packages/
+dbt_project/logs/
+dbt_project/.user.yml
+
+# Dagster
+dagster_project/.tmp_dagster_home_*/
+dagster_project/dagster_home/
+dagster_project/storage/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Data
+data/raw/*.csv
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Credentials (CRITICAL)
+*.json
+.env

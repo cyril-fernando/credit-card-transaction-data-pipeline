@@ -1,15 +1,36 @@
-# Dagster project configuration file
+# Storage for run history (use PostgreSQL instead of temp files)
+run_storage:
+  module: dagster_postgres.run_storage
+  class: PostgresRunStorage
+  config:
+    postgres_url: "postgresql://dagster_user:dagster_password@postgres:5432/dagster_db"
+
+# Storage for event logs
+event_log_storage:
+  module: dagster_postgres.event_log
+  class: PostgresEventLogStorage
+  config:
+    postgres_url: "postgresql://dagster_user:dagster_password@postgres:5432/dagster_db"
+
+# Storage for schedules/sensors
+schedule_storage:
+  module: dagster_postgres.schedule_storage
+  class: PostgresScheduleStorage
+  config:
+    postgres_url: "postgresql://dagster_user:dagster_password@postgres:5432/dagster_db"
+
+# Run coordination
 run_coordinator:
   module: dagster.core.run_coordinator
   class: QueuedRunCoordinator
   config:
-    max_concurrent_runs: 2  # Limit concurrent runs to avoid BigQuery throttling
+    max_concurrent_runs: 2
 
-# Enable run monitoring to track long-running jobs
+# Run monitoring
 run_monitoring:
   enabled: true
   poll_interval_seconds: 30
 
-# Telemetry configuration
+# Telemetry
 telemetry:
-  enabled: false  # Disable telemetry for privacy
+  enabled: false

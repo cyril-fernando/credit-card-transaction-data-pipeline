@@ -12,7 +12,7 @@ from dagster_dbt import DbtCliResource
 from .assets import fraud_detection_dbt_assets, dbt_project
 
 # Point to your dbt profiles directory
-DBT_PROFILES_DIR = Path.home() / ".dbt"
+DBT_PROFILES_DIR = Path("/opt/dagster/.dbt")
 
 # Define a job for running all dbt assets
 fraud_detection_job = define_asset_job(
