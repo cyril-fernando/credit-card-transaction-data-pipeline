@@ -39,7 +39,7 @@ services:
       DAGSTER_POSTGRES_DB: dagster_db
     volumes:
       # Mount BigQuery credentials
-      - C:\Users\cyfer\.dbt\fraud-detection-key.json:/opt/dagster/credentials/fraud-detection-key.json:ro
+      - ${DBT_KEY_PATH}:/opt/dagster/credentials/fraud-detection-key.json:ro
       # Mount dbt profiles 
       - ./profiles-docker.yml:/opt/dagster/.dbt/profiles.yml:ro
     depends_on:
