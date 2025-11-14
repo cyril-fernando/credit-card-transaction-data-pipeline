@@ -3,28 +3,30 @@ venv/
 __pycache__/
 *.pyc
 
-
-# Credentials (CRITICAL - never commit)
+# Credentials 
 *.json
 .env
+profiles.yml
+profiles-docker.yml
+**/profiles.yml
+**/profiles-docker.yml
 
-
-# Data files (don't commit large datasets)
+# Data files 
 data/raw/*.csv
-
 
 # dbt
 dbt_project/target/
 dbt_project/dbt_packages/
 dbt_project/logs/
 
-
-# Dagster (for checkpoint 8+)
+# Dagster
 dagster_project/dagster_home/
 dagster_project/storage/
 dagster_project/*.egg-info/
 dagster_project/.dagster_home/
 
+# Docker
+postgres_data/
 
 # IDE
 .vscode/
