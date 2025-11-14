@@ -310,19 +310,82 @@ Files Created
 
 Docker Commands
 
-```
-# Start everything
-docker compose up -d
+    # Start everything
+    docker compose up -d
 
-# View logs
-docker compose logs -f dagster
+    # View logs
+    docker compose logs -f dagster
 
-# Stop everything
-docker compose down
+    # Stop everything
+    docker compose down
 
-# Rebuild after code changes
-docker compose build
+    # Rebuild after code changes
+    docker compose build
 
-# Enter container
-docker compose exec dagster bash
-```
+    # Enter container
+    docker compose exec dagster bash
+    
+## Summary of Security Measures Taken
+
+### 1. Credential Protection
+- **Removed from Git tracking:** `profiles-docker.yml` (contained Databricks token), `logs/dbt.log`
+- **Added to .gitignore:** `*.json`, `.env`, `profiles.yml`, `profiles-docker.yml`, `logs/`
+- **Verified exclusion:** Service account key (`fraud-detection-key.json`) never committed
+
+### 2. Cross-Platform Compatibility
+- **Created `.env` file:** Stores local-specific paths (LOCAL machine only, not committed)
+- **Created `.env.example`:** Template for others to copy and customize
+- **Updated `docker-compose.yml`:** Changed hardcoded `C:\Users\cyfer\` to `${DBT_KEY_PATH}` environment variable
+- **Benefit:** Project now works on Windows, Mac, and Linux without code changes
+
+### 3. Docker Security
+- **Local-only passwords:** `dagster_password` in `docker-compose.yml` is safe (localhost-only, not exposed to internet)
+- **Mounted credentials:** Key file mounted as read-only volume, not baked into Docker image
+- **Persistent volume excluded:** `postgres_data/` in .gitignore (contains local database, not needed in repo)
+
+### 4. Code Security Scan Results
+- ✅ No API tokens, secrets, or private keys in tracked files
+- ✅ No Windows-specific paths (removed `C:\Users\cyfer`)
+- ✅ Only configuration variable names found (e.g., `POSTGRES_PASSWORD:`, `keyfile:`), not actual values
+- ✅ Service account uses least-privilege permissions (`bigquery.dataEditor`, `bigquery.jobUser` only)
+
+### 5. Files Properly Excluded
+**What's in .gitignore:**
+- Python artifacts: `venv/`, `__pycache__/`, `*.pyc`
+- Credentials: `*.json`, `.env`, `profiles.yml`
+- Generated files: `dbt_project/target/`, `logs/`
+- Docker volumes: `postgres_data/`
+
+**What's committed (safe):**
+- Source code: `*.py`, `*.sql`, `*.yml`
+- Templates: `.env.example`
+- Documentation: `README.md`, `NOTES.md`
+- Configuration: `docker-compose.yml` (with environment variables, no secrets)
+
+---
+## Security & Portability Setup
+
+### Security Measures Implemented
+
+**Credential Protection:**
+- All secrets excluded from Git via comprehensive .gitignore
+- Service account key never committed (stored in `~/.dbt/`, excluded by `*.json`)
+- Removed accidentally tracked files: `profiles-docker.yml` (had Databricks token), `logs/dbt.log`
+- Docker passwords are local-only (not exposed to internet)
+
+**Cross-Platform Compatibility:**
+- Created `.env` file for machine-specific configuration (not committed)
+- Created `.env.example` template for other developers
+- Replaced hardcoded Windows paths (`C:\Users\cyfer\`) with environment variables (`${DBT_KEY_PATH}`)
+- Project now works on Windows, Mac, and Linux without code modification
+
+**Service Account Least Privilege:**
+- Only granted necessary BigQuery permissions: `dataEditor` + `jobUser`
+- Cannot create/delete datasets, manage IAM, or access billing
+- Credentials mounted as read-only volumes in Docker (not baked into images)
+
+**Verification Performed:**
+- Scanned all tracked files for secrets, tokens, API keys (clean)
+- Confirmed no Windows-specific paths in committed code
+- Verified .gitignore properly excludes credentials and generated files
+- Tested `.env` properly ignored by Git
