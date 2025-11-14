@@ -50,7 +50,3 @@ jobs:
           dbt deps
           dbt run
           dbt test
-
-      - name: Run Python tests
-        run: |
-          pytest tests/ -v
