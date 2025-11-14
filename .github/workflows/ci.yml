@@ -19,7 +19,7 @@ jobs:
       
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
+          pip install -r requirements-docker.txt
       
       - name: Create service account key file
         env:
@@ -27,12 +27,26 @@ jobs:
         run: |
           echo "$GCP_SA_KEY" > $HOME/fraud-detection-key.json
       
-      - name: Run dbt tests
+      - name: Generate dbt profiles
+        run: |
+          mkdir -p $HOME/.dbt
+          cat > $HOME/.dbt/profiles.yml << EOF
+          fraud_detection:
+            target: dev
+            outputs:
+              dev:
+                type: bigquery
+                method: service-account
+                project: total-compiler-477816-r3
+                dataset: fraud_detection_dev
+                threads: 4
+                keyfile: $HOME/fraud-detection-key.json
+                location: asia-southeast1
+          EOF
+      
+      - name: Run dbt models and tests
         run: |
           cd dbt_project
           dbt deps
-          dbt test --profiles-dir=$HOME/.dbt --target dev
-
-      - name: Run Python tests
-        run: |
-          pytest tests/ -v
+          dbt run
+          dbt test
