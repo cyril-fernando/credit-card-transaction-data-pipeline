@@ -325,6 +325,62 @@ Docker Commands
     # Enter container
     docker compose exec dagster bash
     
+## CI/CD Pipeline with GitHub Actions
+
+### Workflows Implemented
+
+**1. CI Workflow (`.github/workflows/ci.yml`)**
+- **Trigger:** Pull requests to main branch
+- **Purpose:** Validate code changes before merging
+- **Actions:** Runs `dbt test` to ensure data quality checks pass
+- **Prevents:** Broken code from reaching production
+
+**2. Deploy Workflow (`.github/workflows/deploy.yml`)**
+- **Trigger:** Pushes to main branch (automatic) or manual dispatch
+- **Purpose:** Deploy dbt models to BigQuery
+- **Actions:** 
+  - Installs Python dependencies
+  - Authenticates with GCP using service account
+  - Runs `dbt deps`, `dbt run`, `dbt test`
+- **Result:** Updates BigQuery tables with latest transformations
+
+### Secrets Configuration
+- **GCP_SA_KEY:** BigQuery service account key stored as GitHub repository secret
+- **Access:** Settings → Secrets and variables → Actions
+- **Security:** Never exposed in logs, only accessible to workflows
+
+### Testing the Pipeline
+
+Make a change and push
+```
+git checkout -b feature/test-change
+echo "# Test" >> README.md
+git add README.md
+git commit -m "Test CI/CD"
+git push -u origin feature/test-change
+Create PR on GitHub → CI workflow runs automatically
+```
+---
+
+## Final Project Summary
+
+### Technologies Mastered
+- **Cloud:** Google Cloud Platform, BigQuery
+- **Data Transformation:** dbt, SQL, Python (pandas)
+- **Orchestration:** Dagster, Docker Compose
+- **CI/CD:** GitHub Actions
+- **Database:** PostgreSQL
+- **Testing:** pytest, dbt tests
+- **Version Control:** Git, GitHub
+
+### Professional Practices Demonstrated
+1. **Security:** Service accounts, secrets management, .gitignore
+2. **Portability:** Environment variables, Docker, cross-platform scripts
+3. **Testing:** 11 automated tests (Python + dbt)
+4. **Documentation:** README, code comments, clear commit messages
+5. **Version Control:** Git workflow, branching strategy
+6. **CI/CD:** Automated testing and deployment
+
 ## Summary of Security Measures Taken
 
 ### 1. Credential Protection
@@ -389,3 +445,5 @@ Docker Commands
 - Confirmed no Windows-specific paths in committed code
 - Verified .gitignore properly excludes credentials and generated files
 - Tested `.env` properly ignored by Git
+
+Last updated: November 14, 2025
