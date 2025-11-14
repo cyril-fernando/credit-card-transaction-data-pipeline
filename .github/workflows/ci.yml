@@ -1,0 +1,34 @@
+name: dbt CI Tests
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  dbt-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      
+      - name: Create service account key file
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+        run: |
+          echo "$GCP_SA_KEY" > $HOME/fraud-detection-key.json
+      
+      - name: Run dbt tests
+        run: |
+          cd dbt_project
+          dbt deps
+          dbt test --profiles-dir=$HOME/.dbt --target dev
