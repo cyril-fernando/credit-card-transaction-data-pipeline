@@ -1,277 +1,344 @@
 # Fraud Detection Data Pipeline
 
-End-to-end fraud detection pipeline using dbt, Dagster, BigQuery, and CI/CD automation. Processes 284,000+ credit card transactions to generate risk scores using a 3-layer transformation architecture.
+A learning project implementing a modern data engineering pipeline with dbt, BigQuery, Dagster, and GitHub Actions to process credit card fraud detection data.
 
-## 🏗️ Architecture
+## 🎓 Learning Outcomes
+
+Through this project I learned:
+
+- 🏗️ **Implementing medallion architecture with dbt**
+  - Built 3-layer data transformation pipeline (Bronze → Silver → Gold)
+  - Applied data modeling best practices
+
+- ⚙️ **Setting up automated CI/CD pipelines**
+  - Created GitHub Actions workflows for testing and deployment
+  - Achieved 83-second test validation and 99-second deployments
+
+- 🐳 **Containerizing data applications with Docker**
+  - Multi-container orchestration with Docker Compose
+  - Managed service dependencies (Dagster + PostgreSQL)
+
+- 🔧 **Orchestrating workflows with Dagster**
+  - Automated pipeline scheduling and monitoring
+  - Implemented asset-based data lineage tracking
+
+- ✅ **Writing comprehensive data quality tests**
+  - Built 15 automated tests (11 dbt + 4 Python)
+  - Achieved 100% test coverage with zero failures
+
+- ☁️ **Working with BigQuery at scale**
+  - Processed 284K+ transactions with 10,585 tx/sec throughput
+  - Optimized query performance and cost ($0.26/year)
+
+- 🔒 **Managing secrets and credentials securely**
+  - Implemented GitHub Secrets for CI/CD
+  - Applied least-privilege access principles
+
+## Project Goals
+
+Built to learn and practice:
+- dbt transformations (3-layer medallion architecture)
+- CI/CD automation (GitHub Actions)
+- Container orchestration (Docker Compose)
+- Data quality testing (dbt + pytest)
+- Cloud data warehouse (BigQuery)
+
+## Dataset
+
+**Source:** [Kaggle Credit Card Fraud Detection](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud)
+- 284,807 transactions
+- 150 MB CSV file
+- 30 anonymized features
+- 492 fraudulent transactions (0.17%)
+
+## Tech Stack
+
+- **Language:** Python 3.11
+- **Transformation:** dbt Core 1.10
+- **Data Warehouse:** Google BigQuery
+- **Orchestration:** Dagster 1.12
+- **Database:** PostgreSQL (metadata)
+- **Infrastructure:** Docker Compose
+- **CI/CD:** GitHub Actions
+- **Testing:** pytest, dbt tests
+
+## Architecture
 ```
 Raw Data (Kaggle CSV)
 ↓
-Python Scripts (ETL)
+Python Scripts (ETL) - 24s
 ↓
-BigQuery (Data Warehouse)
+BigQuery Raw (Data Warehouse)
 ↓
-dbt (3-Layer Transformation)
-├── Staging (data cleaning)
-├── Intermediate (feature engineering)
-└── Marts (business logic)
+dbt Transformations - 27s
+├── Staging (Bronze) - Data cleaning
+├── Intermediate (Silver) - Feature engineering
+└── Marts (Gold) - Business logic
 ↓
-Dagster (Orchestration)
-↓
-CI/CD (GitHub Actions)
+BigQuery Dev (fraud_detection_dev)
+↑
+Dagster Orchestration - 72s
+↑
+GitHub Actions CI/CD (83s test, 99s deploy)
 ```
 
-## 🛠️ Tech Stack
+## Performance
 
-**Cloud & Storage**
-- Google BigQuery (data warehouse)
-- Google Cloud Storage (credentials)
+See [BENCHMARK_RESULTS.md](BENCHMARK_RESULTS.md) for detailed metrics.
 
-**Data Transformation**
-- dbt (SQL-based transformations)
-- Python 3.11 (pandas, google-cloud-bigquery)
+**Key Stats:**
+- **Throughput:** 10,585 transactions/second
+- **End-to-End:** 72 seconds (load + transform + test)
+- **CI Test:** 83 seconds
+- **Deploy:** 99 seconds
+- **Test Coverage:** 100% (15/15 passing)
+- **Cost:** $0.00075 per run
 
-**Orchestration & Containerization**
-- Dagster (workflow orchestration)
-- Docker Compose (PostgreSQL + Dagster)
+**vs Industry Standards:**
+- 2-4x faster transformation (27s vs 45-120s typical)
+- 83% faster deployment (99s vs 10-30 min manual)
+- 99.99% lower cost ($0.26/year vs $2,400+ typical)
 
-**CI/CD & Testing**
-- GitHub Actions (automated testing & deployment)
-- pytest (Python unit tests)
-- dbt tests (data quality checks)
+## Project Structure
 
-**Development**
-- Git & GitHub (version control)
-- PowerShell (Windows environment)
-
-## 📁 Project Structure
 ```
 fraud-detection-platform/
 ├── .github/workflows/
-│ ├── ci.yml # Test on pull requests
-│ └── deploy.yml # Deploy on push to main
+│   ├── ci.yml              # Test on pull requests
+│   └── deploy.yml          # Deploy on push to main
 ├── dagster_project/
-│ ├── fraud_detection_dagster/
-│ │ ├── assets.py # Dagster asset definitions
-│ │ └── definitions.py # Dagster job configuration
-│ ├── Dockerfile # Dagster container setup
-│ └── dagster.yml # Dagster storage config
+│   ├── fraud_detection_dagster/
+│   │   ├── assets.py       # Dagster asset definitions
+│   │   └── definitions.py  # Dagster job configuration
+│   ├── Dockerfile          # Dagster container setup
+│   └── dagster.yml         # Dagster storage config
 ├── dbt_project/
-│ ├── models/
-│ │ ├── staging/ # Layer 1: Data cleaning
-│ │ ├── intermediate/ # Layer 2: Feature engineering
-│ │ └── marts/ # Layer 3: Business logic
-│ ├── tests/ # Custom SQL data quality tests
-│ └── dbt_project.yml # dbt configuration
+│   ├── models/
+│   │   ├── staging/        # Layer 1: Data cleaning
+│   │   ├── intermediate/   # Layer 2: Feature engineering
+│   │   └── marts/          # Layer 3: Business logic
+│   ├── tests/              # Custom SQL data quality tests
+│   └── dbt_project.yml     # dbt configuration
 ├── scripts/
-│ ├── download_data.py # Download Kaggle dataset
-│ └── load_to_bigquery.py # Load raw data to BigQuery
+│   ├── download_data.py    # Download Kaggle dataset
+│   └── load_to_bigquery.py # Load raw data to BigQuery
 ├── tests/
-│ └── test_data_quality.py # Python unit tests (pytest)
-├── docker-compose.yml # Multi-container orchestration
-├── .env.example # Environment variable template
-└── requirements.txt # Python dependencies
-
+│   └── test_data_quality.py # Python unit tests (pytest)
+├── docker-compose.yml      # Multi-container orchestration
+├── .env.example            # Environment variable template
+├── requirements.txt        # Python dependencies
+└── BENCHMARK_RESULTS.md    # Performance metrics
 ```
+Quick Start
+Prerequisites
 
-## 🚀 Quick Start
+    Python 3.11+
 
-### Prerequisites
+    Docker & Docker Compose
 
-- Python 3.11+
-- Docker & Docker Compose
-- Google Cloud Platform account with BigQuery enabled
-- Kaggle account (for dataset)
+    Google Cloud Platform account with BigQuery enabled
 
-### 1. Clone Repository
+    Kaggle account (for dataset)
+
+# 1. Clone Repository
 
 ```
 git clone https://github.com/cyril-fernando/dbt-dagster-fraud-pipeline.git
 cd dbt-dagster-fraud-pipeline
 ```
+# 2. Set Up Environment
 
 
-### 2. Set Up Environment
+# Create virtual environment
+`python -m venv venv`
 
-Create virtual environment
-```
-python -m venv venv
-```
-Activate (Windows)
-```
-.\venv\Scripts\activate
-```
-Activate (Mac/Linux)
-```
-source venv/bin/activate
-```
-Install dependencies
-```
-pip install -r requirements.txt
-```
+# Activate (Windows)
+`.\venv\Scripts\activate`
 
+# Activate (Mac/Linux)
+`source venv/bin/activate`
 
-### 3. Configure Environment Variables
+# Install dependencies
+`pip install -r requirements.txt`
 
-Copy example file
-```
-cp .env.example .env
-```
+3. Configure Google Cloud
 
-Edit .env and set paths:
-```
-Windows: DBT_KEY_PATH=C:/Users/YourName/.dbt/fraud-detection-key.json
-Mac/Linux: DBT_KEY_PATH=/home/YourName/.dbt/fraud-detection-key.json
-```
+        Create GCP project
 
+        Enable BigQuery API
 
-### 4. Set Up Google Cloud
+        Create service account with roles:
 
-1. Create GCP project
-2. Enable BigQuery API
-3. Create service account with roles:
-   - BigQuery Data Editor
-   - BigQuery Job User
-4. Download service account key JSON
-5. Save to `~/.dbt/fraud-detection-key.json`
+        BigQuery Data Editor
 
-### 5. Download Data
+        BigQuery Job User
 
-**Download from Kaggle:**
-1. Visit [Kaggle Credit Card Fraud Detection](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud)
-2. Download `creditcard.csv`
-3. Place in a local folder (e.g., `D:\kaggle_data\`)
+        Download service account key JSON
 
-**Set environment variable:**
+        Save to ~/.dbt/fraud-detection-key.json
 
-Windows PowerShell:
-```$env:KAGGLE_DATA_PATH="D:\vs_code_projs\kaggle_data"```
+4. Download Data
 
-Mac/Linux Terminal: ```export KAGGLE_DATA_PATH="/path/to/kaggle/data"```
+          Visit Kaggle Credit Card Fraud Detection
 
-**Run download script:**
-```python scripts/download_data.py```
+          Download creditcard.csv
 
-### 6. Load Data to BigQuery
+          Place in data/raw/ folder
+
+5. Load Data to BigQuery
+
 
 `python scripts/load_to_bigquery.py`
 
+6. Run dbt Transformations
 
-
-### 7. Run dbt Transformations
 ```
 cd dbt_project
 dbt deps
 dbt run
 dbt test
 ```
+7. Start Dagster (Optional)
 
 
-### 8. Start Dagster (Optional)
+# Start containers
+`docker compose up -d`
 
-Start containers
-```
-docker compose up -d
-```
+# Access Dagster UI at `http://localhost:3000`
 
-Access Dagster UI
-Open browser: http://localhost:3000
-Stop containers
-```
-docker compose down
-```
+# Stop containers
+`docker compose down`
 
-## 🧪 Testing
+Testing
+`Run Python Tests`
 
-### Run Python Tests
-```
-pytest tests/ -v
-```
+bash
+`pytest tests/ -v`
 
-### Run dbt Tests
+Run dbt Tests
+
 ```
 cd dbt_project
 dbt test
 ```
+Test Coverage
 
-### Test Coverage
+    4 Python unit tests (data quality checks)
 
-- 4 Python unit tests (data quality checks)
-- 3 Custom dbt SQL tests (business logic validation)
-- 8 dbt schema tests (uniqueness, nullability, relationships)
+    11 dbt tests (3 custom SQL + 8 schema tests)
 
-## 🔄 CI/CD Pipeline
+    Total: 15 tests with 100% pass rate
 
-**Automated Testing (ci.yml)**
-- Triggers on pull requests
-- Runs `dbt test` to validate changes
-- Blocks merge if tests fail
+CI/CD Pipeline
 
-**Automated Deployment (deploy.yml)**
-- Triggers on push to main
-- Runs `dbt run` to update BigQuery tables
-- Runs `dbt test` to verify deployment
+    Automated Testing (ci.yml)
 
-## 📊 Data Pipeline Details
+    Triggers on pull requests
 
-### dbt Models
+    Runs dbt test to validate changes
 
-**Staging Layer (`stg_raw_transactions.sql`)**
-- Cleans raw transaction data
-- Standardizes column names
-- Handles data type conversions
+    Blocks merge if tests fail
 
-**Intermediate Layer (`int_transaction_features.sql`)**
-- Engineers features for fraud detection
-- Calculates transaction velocity
-- Aggregates historical patterns
+    Duration: 83 seconds
 
-**Marts Layer (`fraud_risk_scores.sql`)**
-- Generates final fraud risk scores
-- Applies business rules
-- Outputs analytics-ready table
+Automated Deployment (deploy.yml)
 
-### Data Quality Tests
+    Triggers on push to main
 
-- Transaction amounts must be positive
-- Fraud rate must be realistic (0.1% - 2%)
-- Transaction dates must be valid
-- No duplicate transaction IDs
-- All foreign keys must exist
+    Runs dbt run to update BigQuery tables
 
-## 🔒 Security Practices
+    Runs dbt test to verify deployment
 
-- Service account uses least-privilege permissions
-- Credentials stored in GitHub Secrets (not code)
-- `.gitignore` excludes sensitive files
-- Environment variables for configuration
-- Docker volumes mounted as read-only where applicable
+    Duration: 99 seconds
 
-## 📈 Results
+Data Pipeline Details
+dbt Models
 
-- **Dataset:** 284,807 transactions
-- **Fraud Rate:** 0.17% (492 fraudulent transactions)
-- **Processing Time:** < 2 minutes for full pipeline
-- **Data Quality:** 100% test pass rate
+Staging Layer (stg_raw_transactions.sql)
 
-## 🤝 Contributing
+    Cleans raw transaction data
 
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
+    Standardizes column names
 
-## 📝 License
+    Handles data type conversions
+
+Intermediate Layer (int_transaction_features.sql)
+
+    Engineers features for fraud detection
+
+    Calculates transaction velocity
+
+    Aggregates historical patterns
+
+Marts Layer (fraud_risk_scores.sql)
+
+    Generates final fraud risk scores
+
+    Applies business rules
+
+    Outputs analytics-ready table
+
+Data Quality Tests
+
+    Transaction amounts must be positive
+
+    Fraud rate must be realistic (0.1% - 2%)
+
+    Transaction dates must be valid
+
+    No duplicate transaction IDs
+
+    No missing values in critical columns
+
+Security Practices
+
+    Service account uses least-privilege permissions
+
+    Credentials stored in GitHub Secrets (not code)
+
+    .gitignore excludes sensitive files
+
+    Environment variables for configuration
+
+    Docker volumes mounted as read-only where applicable
+
+Future Improvements
+
+    Add incremental models for larger datasets
+
+    Implement data profiling and monitoring
+
+    Add more sophisticated fraud detection features
+
+    Set up alerting for data quality failures
+
+    Optimize BigQuery costs with partitioning
+
+Contributing
+
+    Fork the repository
+
+    Create feature branch (git checkout -b feature/amazing-feature)
+
+    Commit changes (git commit -m 'Add amazing feature')
+
+    Push to branch (git push origin feature/amazing-feature)
+
+    Open Pull Request
+
+# License
 
 This project is for educational and portfolio purposes.
+# Author
 
-## 👤 Author
+    Cyril Fernando
 
-**Cyril Fernando**
-- GitHub: [@cyril-fernando](https://github.com/cyril-fernando)
+    GitHub: @cyril-fernando
 
-## 🙏 Acknowledgments
+Acknowledgments
 
-- Dataset: [Kaggle Credit Card Fraud Detection](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud)
-- dbt Labs for transformation framework
-- Dagster team for orchestration platform 
+    Dataset: Kaggle Credit Card Fraud Detection
+
+    dbt Labs for transformation framework
+
+    Dagster team for orchestration platform
