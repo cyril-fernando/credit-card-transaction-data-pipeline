@@ -41,7 +41,7 @@ jobs:
                 dataset: fraud_detection_dev
                 threads: 4
                 keyfile: $HOME/fraud-detection-key.json
-                location: US
+                location: asia-southeast1
           EOF
       
       - name: Run dbt models and tests
