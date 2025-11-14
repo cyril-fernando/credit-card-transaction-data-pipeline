@@ -44,10 +44,11 @@ jobs:
                 location: US
           EOF
       
-      - name: Run dbt tests
+      - name: Run dbt models and tests
         run: |
           cd dbt_project
           dbt deps
+          dbt run
           dbt test
 
       - name: Run Python tests
