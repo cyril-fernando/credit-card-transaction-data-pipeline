@@ -140,25 +140,25 @@ Prerequisites
 
     Kaggle account (for dataset)
 
-# 1. Clone Repository
+ 1. Clone Repository
 
 ```
 git clone https://github.com/cyril-fernando/dbt-dagster-fraud-pipeline.git
 cd dbt-dagster-fraud-pipeline
 ```
-# 2. Set Up Environment
+ 2. Set Up Environment
 
 
-# Create virtual environment
+ Create virtual environment
 `python -m venv venv`
 
-# Activate (Windows)
+ Activate (Windows)
 `.\venv\Scripts\activate`
 
-# Activate (Mac/Linux)
+ Activate (Mac/Linux)
 `source venv/bin/activate`
 
-# Install dependencies
+### Install dependencies
 `pip install -r requirements.txt`
 
 3. Configure Google Cloud
@@ -201,12 +201,12 @@ dbt test
 7. Start Dagster (Optional)
 
 
-# Start containers
+### Start containers
 `docker compose up -d`
 
-# Access Dagster UI at `http://localhost:3000`
+ Access Dagster UI at `http://localhost:3000`
 
-# Stop containers
+###  Stop containers
 `docker compose down`
 
 Testing
