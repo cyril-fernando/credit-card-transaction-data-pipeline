@@ -1,6 +1,6 @@
-# Fraud Detection Data Pipeline
+# Credit Card Transaction Pipeline
 
-A learning project implementing a modern data engineering pipeline with dbt, BigQuery, Dagster, and GitHub Actions to process credit card fraud detection data.
+A learning project implementing a modern data engineering pipeline with dbt, BigQuery, Dagster, and GitHub Actions to process credit card transaction data.
 
 ## 🎓 Learning Outcomes
 
@@ -63,24 +63,14 @@ Built to learn and practice:
 - **Testing:** pytest, dbt tests
 
 ## Architecture
-```
-Raw Data (Kaggle CSV)
-↓
-Python Scripts (ETL) - 24s
-↓
-BigQuery Raw (Data Warehouse)
-↓
-dbt Transformations - 27s
-├── Staging (Bronze) - Data cleaning
-├── Intermediate (Silver) - Feature engineering
-└── Marts (Gold) - Business logic
-↓
-BigQuery Dev (fraud_detection_dev)
-↑
-Dagster Orchestration - 72s
-↑
-GitHub Actions CI/CD (83s test, 99s deploy)
-```
+![Architecture](docs/architecture-batch-dagster-dbt-bigquery.png)
+
+This project runs a containerised, batch data pipeline where:
+- `creditcard.csv` is ingested and loaded into BigQuery staging tables.
+- `dbt` transforms data through staging → intermediate → marts layers in BigQuery.
+- `Dagster` (running in Docker) orchestrates the dbt runs and data loads.
+- `GitHub Actions` builds the Docker image and runs dbt tests as part of CI/CD.
+- Business intelligence tools and machine learning jobs consume the marts layer.
 
 ## Performance
 
@@ -143,8 +133,8 @@ Prerequisites
  1. Clone Repository
 
 ```
-git clone https://github.com/cyril-fernando/dbt-dagster-fraud-pipeline.git
-cd dbt-dagster-fraud-pipeline
+git clone https://github.com/cyril-fernando/credit-card-transaction-data-pipeline.git
+cd credit-card-transaction-data-pipeline
 ```
  2. Set Up Environment
 
