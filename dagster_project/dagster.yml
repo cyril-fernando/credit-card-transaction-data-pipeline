@@ -3,21 +3,24 @@ run_storage:
   module: dagster_postgres.run_storage
   class: PostgresRunStorage
   config:
-    postgres_url: "postgresql://dagster_user:dagster_password@postgres:5432/dagster_db"
+    postgres_url:
+      env: DAGSTER_POSTGRES_URL
 
 # Storage for event logs
 event_log_storage:
   module: dagster_postgres.event_log
   class: PostgresEventLogStorage
   config:
-    postgres_url: "postgresql://dagster_user:dagster_password@postgres:5432/dagster_db"
+    postgres_url:
+      env: DAGSTER_POSTGRES_URL
 
 # Storage for schedules/sensors
 schedule_storage:
   module: dagster_postgres.schedule_storage
   class: PostgresScheduleStorage
   config:
-    postgres_url: "postgresql://dagster_user:dagster_password@postgres:5432/dagster_db"
+    postgres_url:
+      env: DAGSTER_POSTGRES_URL
 
 # Run coordination
 run_coordinator:

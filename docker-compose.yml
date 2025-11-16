@@ -1,20 +1,21 @@
-version: '3.8'
+version: "3.8"
 
 services:
-  # PostgreSQL for Dagster metadata 
+  # PostgreSQL for Dagster metadata
   postgres:
     image: postgres:15
     container_name: fraud_detection_postgres
     environment:
-      POSTGRES_USER: dagster_user
-      POSTGRES_PASSWORD: dagster_password
-      POSTGRES_DB: dagster_db
+      POSTGRES_USER: ${DAGSTER_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${DAGSTER_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${DAGSTER_POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dagster_user"]
+      # You can hardcode dagster_user here or also switch to ${DAGSTER_POSTGRES_USER} if you want
+      test: ["CMD-SHELL", "pg_isready -U ${DAGSTER_POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -33,14 +34,15 @@ services:
       # Dagster config
       DAGSTER_HOME: /opt/dagster/dagster_home
       # Database connection (if using PostgreSQL)
-      DAGSTER_POSTGRES_HOST: postgres
-      DAGSTER_POSTGRES_USER: dagster_user
-      DAGSTER_POSTGRES_PASSWORD: dagster_password
-      DAGSTER_POSTGRES_DB: dagster_db
+      DAGSTER_POSTGRES_HOST: ${DAGSTER_POSTGRES_HOST}
+      DAGSTER_POSTGRES_USER: ${DAGSTER_POSTGRES_USER}
+      DAGSTER_POSTGRES_PASSWORD: ${DAGSTER_POSTGRES_PASSWORD}
+      DAGSTER_POSTGRES_DB: ${DAGSTER_POSTGRES_DB}
+      DAGSTER_POSTGRES_URL: ${DAGSTER_POSTGRES_URL}
     volumes:
       # Mount BigQuery credentials
       - ${DBT_KEY_PATH}:/opt/dagster/credentials/fraud-detection-key.json:ro
-      # Mount dbt profiles 
+      # Mount dbt profiles
       - ./profiles-docker.yml:/opt/dagster/.dbt/profiles.yml:ro
     depends_on:
       postgres:
