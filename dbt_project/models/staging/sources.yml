@@ -1,17 +1,46 @@
 version: 2
 
 sources:
-  - name: raw
-    description: "Raw fraud detection data from CSV"
+  - name: kaggle_raw
+    description: |
+      Credit card fraud detection dataset from Kaggle (2013).
+      Contains European cardholder transactions with PCA-anonymized features.
+      
+      Source: Kaggle MLG-ULB creditcardfraud dataset
+      Period: September 2013 (2 days of transactions)
+      Records: 284,807 transactions, 492 frauds (0.17%)
+    
+    loader: kaggle
     database: total-compiler-477816-r3
     schema: fraud_detection_raw
+    
     tables:
       - name: transactions
-        description: "Credit card transaction data (284K rows)"
+        description: "Transaction records with fraud labels and anonymized features"
+        
         columns:
           - name: Time
-            description: "Seconds elapsed between transactions"
+            description: "Seconds elapsed since first transaction in dataset"
+            data_tests:
+              - not_null:
+                  config:
+                    severity: error  # Required for timestamp conversion in staging
+          
           - name: Amount
-            description: "Transaction amount"
+            description: "Transaction amount in USD (not normalized)"
+            data_tests:
+              - not_null:
+                  config:
+                    severity: error  # Core metric for fraud detection features
+          
           - name: Class
-            description: "Fraud label (1=fraud, 0=legitimate)"
+            description: "Fraud indicator (1=fraud, 0=legitimate)"
+            data_tests:
+              - not_null:
+                  config:
+                    severity: error  # Target variable cannot be missing
+              - accepted_values:
+                  values: [0, 1]
+                  quote: false
+                  config:
+                    severity: error  # Only binary values valid for fraud label

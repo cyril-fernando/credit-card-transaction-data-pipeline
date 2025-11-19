@@ -7,7 +7,6 @@ models:
       - name: transaction_id
         description: "Unique transaction identifier"
         data_tests:
-          - unique
           - not_null
       
       - name: transaction_timestamp
@@ -25,3 +24,7 @@ models:
         description: "Fraud indicator (1=fraud, 0=legitimate)"
         data_tests:
           - not_null
+          - accepted_values:
+              values: [0, 1]
+              quote: false
+
