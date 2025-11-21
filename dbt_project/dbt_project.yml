@@ -21,7 +21,10 @@ clean-targets:
 # Model materialization strategy
 models:
   credit_card_analytics:
-    +materialized: view         # Project-wide default for all models
-    
+    +materialized: view          # Default: models are views
+
     staging:
-      +materialized: view       # Explicit staging config for future customization
+      +materialized: view        # Staging models as views
+
+    marts:
+      +materialized: table       # Mart models (facts/summaries) as tables

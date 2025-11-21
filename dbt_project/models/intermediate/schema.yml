@@ -1,48 +1,98 @@
 version: 2
 
 models:
-  - name: int_transaction_features
-    description: "Intermediate features derived from staging transactions for analytics"
+  - name: fct_fraud_transactions
+    description: "Fact table of credit card transactions for fraud analytics and ML; one row per transaction with engineered time, velocity, anomaly, and priority features."
     columns:
       - name: transaction_id
-        description: "Unique transaction identifier"
+        description: "Surrogate key for the transaction; unique at the fact grain after deduplication."
         data_tests:
           - unique
           - not_null
-      
+
       - name: transaction_timestamp
-        description: "Absolute timestamp"
+        description: "Timestamp of when the transaction occurred."
         data_tests:
           - not_null
-      
-      - name: time_seconds
-        description: "Relative time in seconds from first transaction (passed through for velocity calculations)"
 
       - name: transaction_date
-        description: "Date extracted from timestamp (for daily aggregations)"
+        description: "Calendar date of the transaction, used for partitioning and date-based aggregations."
         data_tests:
           - not_null
-      
+
       - name: hour_of_day
-        description: "Hour of day (0-23) for hourly pattern analysis"
+        description: "Hour of day (0–23) at which the transaction occurred."
         data_tests:
           - not_null
-      
+
       - name: day_of_week
-        description: "Day of week (1=Sunday, 7=Saturday)"
-      
-      - name: amount
-        description: "Transaction amount in currency units"
+        description: "Day of week on which the transaction occurred (database-specific encoding)."
+
+      - name: hour_sin
+        description: "Sine component of the cyclical encoding of hour_of_day."
+      - name: hour_cos
+        description: "Cosine component of the cyclical encoding of hour_of_day."
+
+      - name: time_since_prev_tx
+        description: "Seconds elapsed since the previous transaction in the dataset ordering."
+
+      - name: velocity_flag
+        description: "True when time_since_prev_tx is less than or equal to one second."
+
+      - name: transaction_amount
+        description: "Transaction amount in currency units at the fact grain."
         data_tests:
           - not_null
-      
-      - name: amount_z
-        description: "Z-score of transaction amount (measures standard deviations from mean, values >3 indicate outliers)"
-      
+          # Optional: enforce non-negative amounts if this table should not contain refunds
+          # - dbt_utils.expression_is_true:
+          #     expression: "transaction_amount >= 0"
+
       - name: amount_log
-        description: "Natural log of (amount + 1) to compress range for ML models"
-      
-      - name: is_fraud
-        description: "Fraud indicator: 1=fraudulent, 0=legitimate"
+        description: "Log-transformed transaction amount used to reduce skew in the amount distribution."
+
+      - name: amount_z_score
+        description: "Z-score of the log-transformed amount relative to the overall distribution."
+
+      - name: is_amount_outlier_3sigma
+        description: "Flag for transactions with strong amount anomalies based on the three-sigma z-score rule."
         data_tests:
           - not_null
+
+      - name: amount_risk_category
+        description: "Categorical risk band derived from the amount z-score (Normal, Medium, High, Critical)."
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['Normal', 'Medium', 'High', 'Critical']
+
+      - name: is_priority_high_value
+        description: "Priority flag for transactions that are both statistically anomalous and high in their daily amount distribution."
+        data_tests:
+          - not_null
+
+      - name: is_priority_off_peak
+        description: "Priority flag for statistically anomalous transactions that occur during defined off-peak hours."
+        data_tests:
+          - not_null
+
+      - name: is_priority_review
+        description: "Final priority flag indicating that at least one of the configured priority rules is satisfied."
+        data_tests:
+          - not_null
+
+      - name: is_evening_tx
+        description: "True when the transaction occurred between 18:00 and 23:59 local time."
+
+      - name: is_late_night_tx
+        description: "True when the transaction occurred between 00:00 and 05:59 local time."
+
+      - name: is_off_peak_tx
+        description: "True when the transaction occurred between 18:00 and 05:59, covering evening and late-night hours."
+
+      - name: is_fraud
+        description: "Fraud indicator at the transaction level, derived from the source Class field."
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1]
+              quote: false
