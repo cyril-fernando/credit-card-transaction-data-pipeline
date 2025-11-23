@@ -1,52 +1,81 @@
 version: "3.8"
 
 services:
-  # PostgreSQL for Dagster metadata
+  # ============================================================================
+  # METADATA DATABASE (Postgres)
+  # Acts as the persistent memory for Dagster, storing run history and logs.
+  # ============================================================================
   postgres:
     image: postgres:15
-    container_name: fraud_detection_postgres
+    container_name: credit_card_pipeline_db
+
+    # Secures database initialization using values from the .env file.
+    # Prevents sensitive credentials from being hardcoded in the manifest.
     environment:
-      POSTGRES_USER: ${DAGSTER_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${DAGSTER_POSTGRES_PASSWORD}
-      POSTGRES_DB: ${DAGSTER_POSTGRES_DB}
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_DB: "${POSTGRES_DB}"
+
+    # Maps the standard Postgres port to the host for external debugging tools.
     ports:
       - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+
+    # Implements a liveness probe to ensure the database process is responsive
+    # before allowing dependent services to start.
     healthcheck:
-      # You can hardcode dagster_user here or also switch to ${DAGSTER_POSTGRES_USER} if you want
-      test: ["CMD-SHELL", "pg_isready -U ${DAGSTER_POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
-      timeout: 5s
       retries: 5
 
-  # Dagster webserver + daemon
+    # Persists database files to a managed volume to survive container restarts.
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # ============================================================================
+  # DATA PIPELINE (Dagster Application)
+  # The execution runtime containing Python logic, dbt transformations, and UI.
+  # ============================================================================
   dagster:
-    build:
-      context: .
-      dockerfile: dagster_project/Dockerfile
-    container_name: fraud_detection_dagster
+    # Builds the image from the Dockerfile in the project root context.
+    build: .
+    container_name: credit_card_pipeline_app
+
+    # Exposes the Dagster Webserver UI to the host machine.
     ports:
       - "3000:3000"
+
+    # Configures internal connection strings and paths.
+    # Overrides local host paths with Docker-specific internal locations.
     environment:
-      # BigQuery credentials (mounted as volume)
-      GOOGLE_APPLICATION_CREDENTIALS: /opt/dagster/credentials/fraud-detection-key.json
-      # Dagster config
-      DAGSTER_HOME: /opt/dagster/dagster_home
-      # Database connection (if using PostgreSQL)
-      DAGSTER_POSTGRES_HOST: ${DAGSTER_POSTGRES_HOST}
-      DAGSTER_POSTGRES_USER: ${DAGSTER_POSTGRES_USER}
-      DAGSTER_POSTGRES_PASSWORD: ${DAGSTER_POSTGRES_PASSWORD}
-      DAGSTER_POSTGRES_DB: ${DAGSTER_POSTGRES_DB}
-      DAGSTER_POSTGRES_URL: ${DAGSTER_POSTGRES_URL}
+      DAGSTER_POSTGRES_HOST: "postgres"
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_DB: "${POSTGRES_DB}"
+      GOOGLE_APPLICATION_CREDENTIALS: "/tmp/google_key.json"
+      DBT_KEY_PATH: "/tmp/google_key.json"
+      DBT_PROJECT_DIR: "/opt/dagster/app/dbt_project"
+      DBT_PROFILES_DIR: "/root/.dbt"
+      CSV_PATH: "/opt/dagster/app/data/raw/creditcard.csv"
+
+    # Mounts the Google Service Account key safely into the container's temp directory.
+    # Uses read-only mode (:ro) to prevent accidental modification.
     volumes:
-      # Mount BigQuery credentials
-      - ${DBT_KEY_PATH}:/opt/dagster/credentials/fraud-detection-key.json:ro
-      # Mount dbt profiles
-      - ./profiles-docker.yml:/opt/dagster/.dbt/profiles.yml:ro
+      - ${DBT_KEY_PATH}:/tmp/google_key.json:ro
+      - ./profiles-docker.yml:/root/.dbt/profiles.yml:ro
+      - ./data:/opt/dagster/app/data:ro
+
+    # Enforces boot order to prevent connection errors during startup.
     depends_on:
       postgres:
         condition: service_healthy
 
+    # Loads the environment context for variable substitution.
+    env_file:
+      - .env
+
+# ============================================================================
+# PERSISTENT STORAGE
+# Defines managed volumes that exist independently of container lifecycle.
+# ============================================================================
 volumes:
   postgres_data:

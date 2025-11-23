@@ -1,40 +1,49 @@
-# Python
+# --- Source Control ---
+.git
+.gitignore
+.dockerignore
+
+# --- Python Artifacts ---
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 .Python
 venv/
+.venv/
 env/
 *.egg-info/
+.pytest_cache/
+.mypy_cache/
 
-# dbt
+# --- dbt Artifacts ---
 dbt_project/target/
 dbt_project/dbt_packages/
 dbt_project/logs/
 dbt_project/.user.yml
 
-# Dagster
+# --- Dagster Artifacts ---
 dagster_project/.tmp_dagster_home_*/
 dagster_project/dagster_home/
 dagster_project/storage/
 
-# Git
-.git/
-.gitignore
-
-# IDE
+# --- IDE & System ---
 .vscode/
 .idea/
 *.swp
-
-# Data
-data/raw/*.csv
-
-# OS
 .DS_Store
 Thumbs.db
 
-# Credentials (CRITICAL)
+# --- Data & Storage ---
+data/raw/*.csv
+postgres_data/
+
+# --- Secrets ---
 *.json
 .env
+.env.*
+
+# --- Configuration Exclusions ---
+# Block local config to prevent path conflicts in Linux
+profiles.yml
+**/profiles.yml

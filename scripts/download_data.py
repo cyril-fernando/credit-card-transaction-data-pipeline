@@ -7,14 +7,16 @@ or validating its presence locally. Includes defensive configuration checks, rob
 and summary statistics for data validation.
 """
 
-import pandas as pd
-from pathlib import Path
-import shutil
 import os
+import shutil
+from pathlib import Path
+
+import pandas as pd
 from dotenv import load_dotenv
 
 # Load environment variables from .env if present
 load_dotenv()
+
 
 def download_data():
     # Defensive check for required environment variable
@@ -25,8 +27,10 @@ def download_data():
     # Compose source file path and validate existence
     source = Path(kaggle_path) / "creditcard.csv"
     if not source.exists():
-        raise FileNotFoundError(f"Source file not found at {source.absolute()}.\n"
-                                "Add KAGGLE_DATA_PATH to .env or place creditcard.csv in the correct folder.")
+        raise FileNotFoundError(
+            f"Source file not found at {source.absolute()}.\n"
+            "Add KAGGLE_DATA_PATH to .env or place creditcard.csv in the correct folder."
+        )
 
     # Prepare destination and ensure raw data folder exists
     output = Path("data/raw/creditcard.csv")
@@ -46,10 +50,11 @@ def download_data():
     # Print basic validation statistics
     print(f"Loaded {len(df):,} rows and {len(df.columns)} columns.")
     print(f"File size: {output.stat().st_size / 1024 / 1024:.2f} MB.")
-    if 'Class' in df.columns:
+    if "Class" in df.columns:
         print(f"Fraud rate: {df['Class'].mean() * 100:.2f}%")
     else:
         print("Warning: 'Class' column not found; can't compute fraud rate.")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     download_data()

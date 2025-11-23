@@ -14,7 +14,7 @@ WITH base AS (
 -- Goal: Capture temporal patterns (hour/day) and system-level velocity
 -- =================================================================
 time_features AS (
-    SELECT 
+    SELECT
         -- 1. ID & Timestamp
         transaction_id,
         transaction_timestamp,

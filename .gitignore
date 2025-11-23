@@ -1,37 +1,48 @@
-﻿# Python
-venv/
+﻿# --- Python Artifacts ---
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
 
-# Credentials
-*.json
-.env
-profiles.yml
-profiles-docker.yml
-**/profiles.yml
-**/profiles-docker.yml
-
-# Data files
-data/raw/*.csv
-
-# dbt
+# --- dbt Artifacts ---
 dbt_project/target/
 dbt_project/dbt_packages/
 dbt_project/logs/
-logs/
+dbt_project/.user.yml
 
-# Dagster
+# --- Dagster Artifacts ---
+dagster_project/.tmp_dagster_home_*/
 dagster_project/dagster_home/
 dagster_project/storage/
-dagster_project/*.egg-info/
-dagster_project/.dagster_home/
 
-# Docker
-postgres_data/
-
-# IDE
+# --- IDE & System ---
 .vscode/
+.idea/
+*.swp
 .DS_Store
+Thumbs.db
 
-# Temp files
-tracked_files.txt
+# --- Data & Storage ---
+data/raw/*.csv
+postgres_data/
+logs/
+
+# --- Credentials & Secrets ---
+*.json
+.env
+.env.*
+
+# --- Profiles Configuration ---
+# 1. Ignore local profiles (Contains real passwords/paths)
+profiles.yml
+**/profiles.yml
+
+# 2. Track Docker profile (Contains variables only, safe for Git)
+!profiles-docker.yml

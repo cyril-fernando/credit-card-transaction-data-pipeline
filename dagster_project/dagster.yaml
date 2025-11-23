@@ -1,0 +1,24 @@
+# ==============================================================================
+# DAGSTER INSTANCE CONFIGURATION
+# ==============================================================================
+
+# Configures Postgres backend to prevent data loss (run history/logs)
+# when the container restarts. Replaces the default ephemeral SQLite.
+storage:
+  postgres:
+    postgres_db:
+      # Security: Injects credentials from environment variables to keep
+      # secrets out of source control.
+      username:
+        env: POSTGRES_USER
+      password:
+        env: POSTGRES_PASSWORD
+
+      # Networking: Uses the Docker Service name ("postgres") which resolves
+      # automatically to the container's internal IP address.
+      hostname:
+        env: DAGSTER_POSTGRES_HOST
+
+      db_name:
+        env: POSTGRES_DB
+      port: 5432

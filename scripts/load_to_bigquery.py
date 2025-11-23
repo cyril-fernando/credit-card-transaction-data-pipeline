@@ -7,11 +7,12 @@ using environment variables for all credentials and resource identifiers. Includ
 defensive configuration checks, robust error handling, and post-upload reporting.
 """
 
-import pandas as pd
-from google.cloud import bigquery
-from dotenv import load_dotenv
 import os
 from pathlib import Path
+
+import pandas as pd
+from dotenv import load_dotenv
+from google.cloud import bigquery
 
 # Load environment variables
 load_dotenv()
@@ -41,12 +42,13 @@ if not Path(CSV_PATH).exists():
 if not Path(KEYFILE_PATH).exists():
     raise FileNotFoundError(f"GCP keyfile not found at path: {KEYFILE_PATH}")
 
+
 def load_to_bigquery():
     print(f"Loading CSV: {CSV_PATH} to BigQuery table {PROJECT_ID}.{DATASET_ID}.{TABLE_ID}")
 
     try:
         # Authenticate using service account key
-        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = KEYFILE_PATH
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = KEYFILE_PATH
         client = bigquery.Client(project=PROJECT_ID)
 
         # Read CSV data
@@ -57,7 +59,7 @@ def load_to_bigquery():
         # Configure table reference and BigQuery load job
         table_ref = f"{PROJECT_ID}.{DATASET_ID}.{TABLE_ID}"
         job_config = bigquery.LoadJobConfig(
-            write_disposition='WRITE_TRUNCATE',
+            write_disposition="WRITE_TRUNCATE",
             autodetect=True,
         )
 
@@ -74,9 +76,11 @@ def load_to_bigquery():
         print(f"Size: {table.num_bytes / 1024 / 1024:.2f} MB.")
     except Exception as e:
         import traceback
+
         print(f"Upload failed: {e}")
         traceback.print_exc()
         exit(1)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     load_to_bigquery()

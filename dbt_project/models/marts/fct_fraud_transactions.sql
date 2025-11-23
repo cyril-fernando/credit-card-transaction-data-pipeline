@@ -16,7 +16,7 @@ WITH source AS (
 ),
 
 enriched AS (
-    SELECT 
+    SELECT
         -- Transaction grain: one row per transaction
         transaction_id,
         transaction_timestamp,
@@ -57,62 +57,62 @@ enriched AS (
         -- Priority flags based on anomaly score, amount, and time-of-day
 
         -- High-value priority: 3-sigma anomaly and in the top 1% of amounts for the transaction_date
-        CASE 
-            WHEN ABS(amount_z_score) >= 3.0 
+        CASE
+            WHEN ABS(amount_z_score) >= 3.0
              AND PERCENT_RANK() OVER (
                     PARTITION BY transaction_date
                     ORDER BY amount
                  ) >= 0.99
-            THEN TRUE 
-            ELSE FALSE 
+            THEN TRUE
+            ELSE FALSE
         END AS is_priority_high_value,
 
         -- Off-peak priority: 3-sigma anomaly that occurs during off-peak hours (18:00–05:59)
-        CASE 
-            WHEN ABS(amount_z_score) >= 3.0 
+        CASE
+            WHEN ABS(amount_z_score) >= 3.0
              AND (
                     hour_of_day BETWEEN 18 AND 23
                  OR hour_of_day BETWEEN 0 AND 5
                  )
-            THEN TRUE 
-            ELSE FALSE 
+            THEN TRUE
+            ELSE FALSE
         END AS is_priority_off_peak,
 
         -- Combined priority flag for downstream alerting and aggregation
-        CASE 
+        CASE
             WHEN (
-                    ABS(amount_z_score) >= 3.0 
+                    ABS(amount_z_score) >= 3.0
                     AND PERCENT_RANK() OVER (
                             PARTITION BY transaction_date
                             ORDER BY amount
                         ) >= 0.99
                  )
               OR (
-                    ABS(amount_z_score) >= 3.0 
+                    ABS(amount_z_score) >= 3.0
                     AND (
                            hour_of_day BETWEEN 18 AND 23
                         OR hour_of_day BETWEEN 0 AND 5
                         )
                  )
-            THEN TRUE 
-            ELSE FALSE 
+            THEN TRUE
+            ELSE FALSE
         END AS is_priority_review,
 
         -- Off-peak time-of-day flags
-        CASE 
-            WHEN hour_of_day BETWEEN 18 AND 23 THEN TRUE 
-            ELSE FALSE 
+        CASE
+            WHEN hour_of_day BETWEEN 18 AND 23 THEN TRUE
+            ELSE FALSE
         END AS is_evening_tx,          -- 18:00–23:59
 
-        CASE 
-            WHEN hour_of_day BETWEEN 0 AND 5 THEN TRUE 
-            ELSE FALSE 
+        CASE
+            WHEN hour_of_day BETWEEN 0 AND 5 THEN TRUE
+            ELSE FALSE
         END AS is_late_night_tx,       -- 00:00–05:59
 
-        CASE 
-            WHEN hour_of_day BETWEEN 18 AND 23 
-               OR hour_of_day BETWEEN 0 AND 5 THEN TRUE 
-            ELSE FALSE 
+        CASE
+            WHEN hour_of_day BETWEEN 18 AND 23
+               OR hour_of_day BETWEEN 0 AND 5 THEN TRUE
+            ELSE FALSE
         END AS is_off_peak_tx,         -- 18:00–05:59 combined off-hours
 
         -- Fraud label

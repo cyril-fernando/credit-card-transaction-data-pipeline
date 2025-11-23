@@ -1,0 +1,72 @@
+# Standard pre-commit configuration for data engineering projects
+# Prevents secrets, enforces formatting, validates config files
+
+repos:
+  # ============================================================================
+  # SECURITY: Detect secrets and credentials
+  # ============================================================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      # Block private keys and certificates
+      - id: detect-private-key
+
+      # Block AWS credentials
+      - id: detect-aws-credentials
+        args: ['--allow-missing-credentials']
+
+
+  # ============================================================================
+  # FILE SAFETY: Prevent large files and corrupted commits
+  # ============================================================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      # Block files over 1MB (prevents CSV/data files)
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+
+      # Detect merge conflict markers
+      - id: check-merge-conflict
+
+
+
+  # ============================================================================
+  # CONFIG VALIDATION: Ensure config files are valid
+  # ============================================================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      # Validate YAML syntax
+      - id: check-yaml
+        args: ['--unsafe']  # Allows custom YAML tags (needed for dbt)
+
+      # Validate JSON syntax
+      - id: check-json
+
+      # Validate TOML syntax (pyproject.toml)
+      - id: check-toml
+
+      # Ensure files end with newline
+      - id: end-of-file-fixer
+
+      # Remove trailing whitespace
+      - id: trailing-whitespace
+
+
+  # ============================================================================
+  # PYTHON: Code formatting and quality
+  # ============================================================================
+  # Black: Auto-format Python code
+  - repo: https://github.com/psf/black
+    rev: 23.12.1
+    hooks:
+      - id: black
+        args: ['--line-length=100']
+
+  # isort: Sort Python imports
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: ['--profile', 'black']

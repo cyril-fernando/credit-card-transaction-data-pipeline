@@ -19,24 +19,24 @@ renamed AS (
             'V21','V22','V23','V24','V25','V26','V27','V28',
             'Class'
         ]) }} AS transaction_id,
-        
+
         -- Convert relative Time (seconds since start) to absolute timestamp anchored on 2013-09-01 midnight
         {{ dbt.dateadd('second', 'cast(Time as INT64)', "'2013-09-01 00:00:00'") }} AS transaction_timestamp,
-        
+
         -- Retain original Time as time_seconds for velocity calculations
         Time AS time_seconds,
-        
+
         -- Include PCA anonymized features dynamically for maintainability
         {% for i in range(1, 29) %}
         V{{ i }}{{ "," if not loop.last }}
         {% endfor %},
-        
+
         -- Transaction amount with clear naming
         Amount AS amount,
-        
+
         -- Fraud indicator with clear naming
         Class AS is_fraud
-        
+
     FROM source
 )
 

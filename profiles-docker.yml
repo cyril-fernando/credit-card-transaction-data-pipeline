@@ -1,0 +1,15 @@
+# profiles-docker.yml
+credit_card_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: service-account
+      # We use Env Vars so it reads from docker-compose environment
+      project: "{{ env_var('GCP_PROJECT_ID') }}"
+      dataset: "{{ env_var('BQ_DATASET_ID') }}"
+      threads: 4
+      # Crucial: This points to where we mounted the key inside Docker
+      keyfile: "{{ env_var('DBT_KEY_PATH') }}"
+      location: asia-southeast1
+      priority: interactive

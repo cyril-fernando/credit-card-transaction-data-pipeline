@@ -5,19 +5,19 @@ sources:
     description: |
       Credit card fraud detection dataset from Kaggle (2013).
       Contains European cardholder transactions with PCA-anonymized features.
-      
+
       Source: Kaggle MLG-ULB creditcardfraud dataset
       Period: September 2013 (2 days of transactions)
       Records: 284,807 transactions, 492 frauds (0.17%)
-    
+
     loader: kaggle
     database: total-compiler-477816-r3
     schema: fraud_detection_raw
-    
+
     tables:
       - name: transactions
         description: "Transaction records with fraud labels and anonymized features"
-        
+
         columns:
           - name: Time
             description: "Seconds elapsed since first transaction in dataset"
@@ -25,14 +25,14 @@ sources:
               - not_null:
                   config:
                     severity: error  # Required for timestamp conversion in staging
-          
+
           - name: Amount
             description: "Transaction amount in USD (not normalized)"
             data_tests:
               - not_null:
                   config:
                     severity: error  # Core metric for fraud detection features
-          
+
           - name: Class
             description: "Fraud indicator (1=fraud, 0=legitimate)"
             data_tests:
