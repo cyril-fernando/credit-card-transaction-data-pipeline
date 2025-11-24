@@ -46,3 +46,7 @@ profiles.yml
 
 # 2. Track Docker profile (Contains variables only, safe for Git)
 !profiles-docker.yml
+
+# Coverage
+.coverage
+htmlcov/
