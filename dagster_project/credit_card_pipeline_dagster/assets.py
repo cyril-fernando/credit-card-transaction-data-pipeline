@@ -5,6 +5,7 @@ Defines two asset layers:
 1. Ingestion: Loads local CSV into BigQuery raw table
 2. Transformation: Runs dbt models to create staging and mart tables
 """
+
 import os
 from pathlib import Path
 

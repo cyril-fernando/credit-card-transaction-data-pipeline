@@ -6,7 +6,7 @@ repos:
   # SECURITY: Detect secrets and credentials
   # ============================================================================
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v6.0.0
     hooks:
       # Block private keys and certificates
       - id: detect-private-key
@@ -20,7 +20,7 @@ repos:
   # FILE SAFETY: Prevent large files and corrupted commits
   # ============================================================================
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v6.0.0
     hooks:
       # Block files over 1MB (prevents CSV/data files)
       - id: check-added-large-files
@@ -35,7 +35,7 @@ repos:
   # CONFIG VALIDATION: Ensure config files are valid
   # ============================================================================
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v6.0.0
     hooks:
       # Validate YAML syntax
       - id: check-yaml
@@ -59,14 +59,14 @@ repos:
   # ============================================================================
   # Black: Auto-format Python code
   - repo: https://github.com/psf/black
-    rev: 23.12.1
+    rev: 25.11.0
     hooks:
       - id: black
         args: ['--line-length=100']
 
   # isort: Sort Python imports
   - repo: https://github.com/PyCQA/isort
-    rev: 5.13.2
+    rev: 7.0.0
     hooks:
       - id: isort
         args: ['--profile', 'black']
