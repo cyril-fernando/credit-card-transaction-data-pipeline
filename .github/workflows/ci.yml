@@ -59,6 +59,13 @@ jobs:
                 priority: interactive
           EOF
 
+      # Generate manifest.json required by @dbt_assets decorator
+      - name: Generate dbt manifest
+        run: |
+          cd dbt_project
+          dbt deps
+          dbt parse
+
       - name: Run linting
         run: pre-commit run --all-files
 
@@ -69,5 +76,4 @@ jobs:
       - name: Validate dbt models
         run: |
           cd dbt_project
-          dbt deps
           dbt parse
